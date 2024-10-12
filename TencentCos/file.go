@@ -5,6 +5,7 @@ import (
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"gsync/logger"
 	"path"
+	"path/filepath"
 )
 
 type FileManager struct {
@@ -38,7 +39,7 @@ func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.Complete
 
 func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUploadOptions) *cos.CompleteMultipartUploadResult {
 	remoteDstDir = FolderFormater(remoteDstDir)
-	remoteFilePath := path.Join(remoteDstDir, path.Base(localSrc))
+	remoteFilePath := path.Join(remoteDstDir, filepath.Base(localSrc))
 	res, _, err := f.client.Object.Upload(
 		context.Background(), remoteFilePath, localSrc, nil,
 	)

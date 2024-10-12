@@ -74,6 +74,21 @@ func IsBucketExist(bucketUrl string) bool {
 	return false
 }
 
+func HeadBucket(bucketName string) *cos.Response {
+	bucketUrl, ok := FindBucketUrlByName(bucketName)
+	if !ok {
+		logger.Error("找不到bucket[ %s ] %s", bucketName)
+		return nil
+	}
+	client := NewClient(bucketUrl)
+	resp, err := client.Bucket.Head(context.Background())
+	if err != nil {
+		logger.Error("查询Bucket错误[ %s ] %s", bucketUrl, err.Error())
+		return nil
+	}
+	return resp
+}
+
 func GenerateBucketUrl(bucketName, regionKey string) string {
 	regions := map[string]string{"北京": "beijing", "南京": "nanjing", "上海": "shanghai", "广州": "guangzhou", "成都": "chengdu", "重庆": "chongqing"}
 

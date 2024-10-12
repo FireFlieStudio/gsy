@@ -138,3 +138,26 @@ func (f *FileManager) DeleteFile(filePath string) {
 		logger.Info("文件删除成功[ %s ]", filePath)
 	}
 }
+
+func (f *FileManager) IsExists(filePath string) bool {
+	ok, err := f.client.Object.IsExist(context.Background(), filePath)
+	if err != nil && ok {
+		return true
+	}
+	return false
+}
+
+func (f *FileManager) Head(filePath string) *cos.Response {
+	resp, err := f.client.Object.Head(context.Background(), filePath, nil)
+	if err != nil {
+		logger.Error("查询对象失败[ %s ] %s", filePath, err)
+		return nil
+	}
+	return resp
+
+	// Response Usage
+	//contentType := resp.Header.Get("Content-Type")
+	//contentLength := resp.Header.Get("Content-Length")
+	//eTag := resp.Header.Get("ETag")
+	//reqId := resp.Header.Get("X-Cos-Request-Id")
+}

@@ -27,8 +27,14 @@ func NewFileManager(bucketName string) *FileManager {
 
 func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.CompleteMultipartUploadResult {
 	opt := &cos.MultiUploadOptions{
+		OptIni: &cos.InitiateMultipartUploadOptions{
+			ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
+				// Set ProgressBar CallBack
+				Listener: &ProgressBar{},
+			},
+		},
 		// 开始分块文件大小
-		PartSize: 32,
+		PartSize: 4,
 		// 上传线程池大小
 		ThreadPoolSize: 16,
 		// 是否开启断点续传
@@ -41,7 +47,7 @@ func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUpload
 	remoteDstDir = FolderFormater(remoteDstDir)
 	remoteFilePath := path.Join(remoteDstDir, filepath.Base(localSrc))
 	res, _, err := f.client.Object.Upload(
-		context.Background(), remoteFilePath, localSrc, nil,
+		context.Background(), remoteFilePath, localSrc, opt,
 	)
 	if err != nil {
 		logger.Error("上传文件失败[ %s ] %s", remoteDstDir, err)
@@ -53,7 +59,11 @@ func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUpload
 
 func (f *FileManager) DefaultDownload(remoteSrc, localDst string) {
 	opt := &cos.MultiDownloadOptions{
-		PartSize:       32,
+		Opt: &cos.ObjectGetOptions{
+			// Set ProgressBar CallBack
+			Listener: &ProgressBar{},
+		},
+		PartSize:       4,
 		ThreadPoolSize: 16,
 		CheckPoint:     true,
 	}

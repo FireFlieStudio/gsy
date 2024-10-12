@@ -21,6 +21,10 @@ func Bar(iv, total int64) {
 	fmt.Printf("\r[%-50s]%.2f%%  %8d/%d %s/%s", bar, percent, iv, total, humanize.Bytes(uint64(iv)), humanize.Bytes(uint64(total)))
 }
 
+func CloseBar() {
+	fmt.Printf("\n")
+}
+
 var (
 	Blue   = color.New(color.FgHiWhite, color.BgHiBlue).SprintFunc()
 	Green  = color.New(color.FgHiWhite, color.BgHiGreen).SprintFunc()

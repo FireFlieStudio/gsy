@@ -34,9 +34,9 @@ func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.Complete
 			},
 		},
 		// 开始分块文件大小
-		PartSize: 4,
+		PartSize: 1,
 		// 上传线程池大小
-		ThreadPoolSize: 16,
+		ThreadPoolSize: 32,
 		// 是否开启断点续传
 		CheckPoint: true,
 	}
@@ -46,6 +46,7 @@ func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.Complete
 func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUploadOptions) *cos.CompleteMultipartUploadResult {
 	remoteDstDir = FolderFormater(remoteDstDir)
 	remoteFilePath := path.Join(remoteDstDir, filepath.Base(localSrc))
+	logger.Info("文件上传开始 [ %s -> %s ]", localSrc, remoteFilePath)
 	res, _, err := f.client.Object.Upload(
 		context.Background(), remoteFilePath, localSrc, opt,
 	)
@@ -63,14 +64,15 @@ func (f *FileManager) DefaultDownload(remoteSrc, localDst string) {
 			// Set ProgressBar CallBack
 			Listener: &ProgressBar{},
 		},
-		PartSize:       4,
-		ThreadPoolSize: 16,
+		PartSize:       1,
+		ThreadPoolSize: 32,
 		CheckPoint:     true,
 	}
 	f.download(remoteSrc, localDst, opt)
 }
 
 func (f *FileManager) download(remoteSrc, localDst string, opt *cos.MultiDownloadOptions) {
+	logger.Info("文件下载开始[ %s -> %s ]", remoteSrc, localDst)
 	_, err := f.client.Object.Download(
 		context.Background(), remoteSrc, localDst, opt,
 	)

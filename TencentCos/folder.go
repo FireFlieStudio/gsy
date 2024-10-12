@@ -7,9 +7,7 @@ import (
 )
 
 func (f *FileManager) CreateFolder(key string) {
-	if !FolderFormatCheck(key) {
-		logger.Error("文件夹格式错误,无法创建[ %s ]", key)
-	}
+	key = FolderFormater(key)
 	if _, err := f.client.Object.Put(context.Background(), key, strings.NewReader(""), nil); err != nil {
 		logger.Error("文件夹创建失败[ %s ] %s", key, err)
 	} else {
@@ -18,9 +16,7 @@ func (f *FileManager) CreateFolder(key string) {
 }
 
 func (f *FileManager) DeleteFolder(key string) {
-	if !FolderFormatCheck(key) {
-		logger.Error("文件夹格式错误,无法删除[ %s ]", key)
-	}
+	key = FolderFormater(key)
 	if _, err := f.client.Object.Delete(context.Background(), key); err != nil {
 		logger.Error("文件夹删除失败[ %s ] %s", key, err)
 	} else {
@@ -28,6 +24,9 @@ func (f *FileManager) DeleteFolder(key string) {
 	}
 }
 
-func FolderFormatCheck(key string) bool {
-	return strings.HasSuffix(key, "/")
+func FolderFormater(key string) string {
+	if !strings.HasSuffix(key, "/") {
+		return key + "/"
+	}
+	return key
 }

@@ -37,10 +37,7 @@ func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.Complete
 }
 
 func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUploadOptions) *cos.CompleteMultipartUploadResult {
-	if !FolderFormatCheck(remoteDstDir) {
-		logger.Error("文件上传失败,文件夹格式异常[ %s ]", remoteDstDir)
-		return nil
-	}
+	remoteDstDir = FolderFormater(remoteDstDir)
 	remoteFilePath := path.Join(remoteDstDir, path.Base(localSrc))
 	res, _, err := f.client.Object.Upload(
 		context.Background(), remoteFilePath, localSrc, nil,
@@ -102,21 +99,18 @@ func (f *FileManager) AutoList(remoteDstPath string) []*cos.BucketGetResult {
 	return bucketResultList
 }
 
-func (f *FileManager) ListDir(remoteDstPath string) (*cos.BucketGetResult, bool) {
-	if !FolderFormatCheck(remoteDstPath) {
-		logger.Error("列出对象失败,文件夹格式异常[ %s ]", remoteDstPath)
-		return nil, false
-	}
+func (f *FileManager) ListDir(remoteDstDir string) (*cos.BucketGetResult, bool) {
+	remoteDstDir = FolderFormater(remoteDstDir)
 	opt := &cos.BucketGetOptions{
-		Prefix:    remoteDstPath, // prefix 表示要查询的文件夹
-		Delimiter: "/",           // deliver 表示分隔符, 设置为/表示列出当前目录下的 object, 设置为空表示列出所有的 object
-		MaxKeys:   1000,          // 设置最大遍历出多少个对象, 一次 list object 最大支持1000
+		Prefix:    remoteDstDir, // prefix 表示要查询的文件夹
+		Delimiter: "/",          // deliver 表示分隔符, 设置为/表示列出当前目录下的 object, 设置为空表示列出所有的 object
+		MaxKeys:   1000,         // 设置最大遍历出多少个对象, 一次 list object 最大支持1000
 	}
 	return f.list(opt)
 }
 
 func (f *FileManager) ListNext(bucketResult *cos.BucketGetResult) (*cos.BucketGetResult, bool) {
-	logger.Info("检测到对象列出未完整,正在继续,当前 Marker[ %s ]", bucketResult.NextMarker)
+	logger.Info("检测到对象列出未完整,正在继续列出中... 当前 Marker[ %s ]", bucketResult.NextMarker)
 	opt := &cos.BucketGetOptions{
 		Prefix:       bucketResult.Prefix,       // prefix 表示要查询的文件夹
 		Delimiter:    bucketResult.Delimiter,    // deliver 表示分隔符, 设置为/表示列出当前目录下的 object, 设置为空表示列出所有的 object
@@ -128,6 +122,7 @@ func (f *FileManager) ListNext(bucketResult *cos.BucketGetResult) (*cos.BucketGe
 }
 
 func (f *FileManager) list(opt *cos.BucketGetOptions) (*cos.BucketGetResult, bool) {
+	logger.Info("正在列出对象中...[ %s ]", opt.Prefix)
 	bucketResult, _, err := f.client.Bucket.Get(context.Background(), opt)
 	if err != nil {
 		logger.Error("列出对象失败[ %s ] %s", err)

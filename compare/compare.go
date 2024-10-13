@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"gsync/TencentCos"
 	"gsync/utils"
 	"io"
 	"io/ioutil"
@@ -46,7 +47,6 @@ func traversal(path string, master bool) {
 	for _, file := range files {
 		name := file.Name()
 		if !file.IsDir() {
-			Size := utils.GetSize(path + name)
 			iv := 0
 			h := md5.New()
 			buf := make([]byte, 20480)
@@ -54,13 +54,11 @@ func traversal(path string, master bool) {
 			for {
 				n, err := r.Read(buf)
 				iv += n
-				utils.Bar(int64(iv), Size)
 				if err == io.EOF {
 					break
 				}
 				h.Write(buf[:n])
 			}
-			fmt.Printf("%s %s\n", utils.Blue(path+name), utils.Green(hex.EncodeToString(h.Sum(nil))))
 			FileMd5List.Store(path+name, hex.EncodeToString(h.Sum(nil)))
 			r.Close()
 		}
@@ -86,7 +84,7 @@ func BuildFileMd5List(path string) {
 }
 
 func ShowFileMd5List(DstPath string) {
-	BuildFileMd5List(DstPath)
+	BuildFileMd5List(TencentCos.PathConv(DstPath))
 	FileMd5List.Range(func(key, value interface{}) bool {
 		fmt.Printf("%s %s\n", utils.Blue(key), utils.Green(value))
 		return true

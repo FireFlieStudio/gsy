@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
-	"gsync/logger"
-	"os"
 )
 
 func Bar(iv, total int64) {
@@ -31,11 +29,3 @@ var (
 	Red    = color.New(color.FgHiWhite, color.BgHiRed).SprintFunc()
 	Yellow = color.New(color.FgHiWhite, color.BgHiYellow).SprintFunc()
 )
-
-func GetSize(file string) int64 {
-	info, err := os.Stat(file)
-	if err != nil {
-		logger.Error("获取文件大小失败!!!" + err.Error())
-	}
-	return info.Size()
-}

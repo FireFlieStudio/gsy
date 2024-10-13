@@ -23,10 +23,3 @@ func (f *FileManager) DeleteFolder(key string) {
 		logger.Info("文件夹删除成功[ %s ]", key)
 	}
 }
-
-func FolderFormater(key string) string {
-	if !strings.HasSuffix(key, "/") {
-		return key + "/"
-	}
-	return key
-}

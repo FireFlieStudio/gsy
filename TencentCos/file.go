@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"gsync/logger"
-	"path"
 	"path/filepath"
 )
 
@@ -25,7 +24,15 @@ func NewFileManager(bucketName string) *FileManager {
 	}
 }
 
+func (f *FileManager) Upload(localSrc string) *cos.CompleteMultipartUploadResult {
+	remoteDstDir := upLoadPathConv(filepath.Dir(localSrc))
+	return f.DefaultUpload(remoteDstDir, localSrc)
+}
+
 func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.CompleteMultipartUploadResult {
+	remoteDstDir = FolderFormater(remoteDstDir)
+	remoteDstDir, localSrc = AddressMergingAndConv(localSrc, remoteDstDir)
+
 	opt := &cos.MultiUploadOptions{
 		OptIni: &cos.InitiateMultipartUploadOptions{
 			ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
@@ -44,21 +51,27 @@ func (f *FileManager) DefaultUpload(remoteDstDir, localSrc string) *cos.Complete
 }
 
 func (f *FileManager) upload(remoteDstDir, localSrc string, opt *cos.MultiUploadOptions) *cos.CompleteMultipartUploadResult {
-	remoteDstDir = FolderFormater(remoteDstDir)
-	remoteFilePath := path.Join(remoteDstDir, filepath.Base(localSrc))
-	logger.Info("文件上传开始 [ %s -> %s ]", localSrc, remoteFilePath)
+	logger.Info("文件上传开始 [ %s -> %s ]", localSrc, remoteDstDir)
 	res, _, err := f.client.Object.Upload(
-		context.Background(), remoteFilePath, localSrc, opt,
+		context.Background(), remoteDstDir, localSrc, opt,
 	)
 	if err != nil {
 		logger.Error("上传文件失败[ %s ] %s", remoteDstDir, err)
 	} else {
-		logger.Info("上传文件成功[ %s -> %s ]", localSrc, remoteFilePath)
+		logger.Info("上传文件成功[ %s -> %s ]", localSrc, remoteDstDir)
 	}
 	return res
 }
 
-func (f *FileManager) DefaultDownload(remoteSrc, localDst string) {
+func (f *FileManager) Download(remoteSrc string) {
+	localDstDir := downloadPathConv(filepath.Dir(remoteSrc))
+	f.DefaultDownload(remoteSrc, localDstDir)
+}
+
+func (f *FileManager) DefaultDownload(remoteSrc, localDstDir string) {
+	localDstDir = FolderFormater(localDstDir)
+	localDstDir, remoteSrc = AddressMergingAndConv(remoteSrc, localDstDir)
+
 	opt := &cos.MultiDownloadOptions{
 		Opt: &cos.ObjectGetOptions{
 			// Set ProgressBar CallBack
@@ -68,18 +81,18 @@ func (f *FileManager) DefaultDownload(remoteSrc, localDst string) {
 		ThreadPoolSize: 32,
 		CheckPoint:     true,
 	}
-	f.download(remoteSrc, localDst, opt)
+	f.download(remoteSrc, localDstDir, opt)
 }
 
-func (f *FileManager) download(remoteSrc, localDst string, opt *cos.MultiDownloadOptions) {
-	logger.Info("文件下载开始[ %s -> %s ]", remoteSrc, localDst)
+func (f *FileManager) download(remoteSrc, localDstDir string, opt *cos.MultiDownloadOptions) {
+	logger.Info("文件下载开始[ %s -> %s ]", remoteSrc, localDstDir)
 	_, err := f.client.Object.Download(
-		context.Background(), remoteSrc, localDst, opt,
+		context.Background(), remoteSrc, localDstDir, opt,
 	)
 	if err != nil {
 		logger.Error("文件下载失败[ %s ]", remoteSrc, err)
 	} else {
-		logger.Info("文件下载成功[ %s -> %s ]", remoteSrc, localDst)
+		logger.Info("文件下载成功[ %s -> %s ]", remoteSrc, localDstDir)
 	}
 
 }
